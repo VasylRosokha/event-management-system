@@ -9,42 +9,47 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../users/auth/jwt-auth.guard';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
+@ApiTags('events')
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  // POST /events - protected
+  @ApiOperation({ summary: 'Create a new event' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() dto: CreateEventDto, @Request() req: any) {
     return this.eventsService.createEvent(dto, req.user);
   }
 
-  // GET /events - public
+  @ApiOperation({ summary: 'Get all public events' })
   @Get()
   async getAll() {
     return this.eventsService.getAllPublicEvents();
   }
 
-  // GET /events/:id - public
+  @ApiOperation({ summary: 'Get event by ID' })
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.eventsService.getEventById(id);
   }
 
-  // PATCH /events/:id - protected
+  @ApiOperation({ summary: 'Update an event (organizer only)' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateEventDto, @Request() req: any) {
     return this.eventsService.updateEvent(id, dto, req.user);
   }
 
-  // DELETE /events/:id - protected
+  @ApiOperation({ summary: 'Delete an event (organizer only)' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async delete(@Param('id') id: string, @Request() req: any) {
@@ -52,23 +57,24 @@ export class EventsController {
     return { message: 'Event deleted successfully' };
   }
 
-  // JOIN EVENT
-  // POST /events/:id/join
+  @ApiOperation({ summary: 'Join an event' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post(':id/join')
   async join(@Param('id') id: string, @Request() req: any) {
     return this.eventsService.joinEvent(id, req.user);
   }
 
-  // LEAVE EVENT
-  // POST /events/:id/leave
+  @ApiOperation({ summary: 'Leave an event' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Post(':id/leave')
   async leave(@Param('id') id: string, @Request() req: any) {
     return this.eventsService.leaveEvent(id, req.user);
   }
 
-  // GET /users/me/events - protected
+  @ApiOperation({ summary: 'Get events for the current user' })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('/users/me/events')
   async getMyEvents(@Request() req: any) {
