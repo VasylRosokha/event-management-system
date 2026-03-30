@@ -1,27 +1,39 @@
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/axios'
+import { useAuth } from '../context/AuthContext'
+
+type FormData = {
+  email: string
+  password: string
+}
+
+const schema = yup.object({
+  email: yup.string().email('Invalid email').required('Email is required'),
+  password: yup.string().required('Password is required'),
+})
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const navigate = useNavigate()
+  const { login } = useAuth()
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<FormData>({ resolver: yupResolver(schema) })
 
+  const onSubmit = async (data: FormData) => {
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password,
-      })
-
-      localStorage.setItem('token', response.data.access_token)
-
+      const response = await api.post('/auth/login', data)
+      login(response.data.access_token)
       navigate('/')
     } catch (error) {
       console.error('Login failed', error)
-      alert('Invalid credentials')
+      setError('root', { message: 'Invalid credentials' })
     }
   }
 
@@ -29,25 +41,17 @@ export default function LoginPage() {
     <div>
       <h1>Login</h1>
 
-      <form onSubmit={handleLogin}>
+      {errors.root && <p style={{ color: 'red' }}>{errors.root.message}</p>}
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          <input type="email" placeholder="Email" {...register('email')} />
+          {errors.email && <p style={{ color: 'red' }}>{errors.email.message}</p>}
         </div>
 
         <div>
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <input type="password" placeholder="Password" {...register('password')} />
+          {errors.password && <p style={{ color: 'red' }}>{errors.password.message}</p>}
         </div>
 
         <button type="submit">Login</button>

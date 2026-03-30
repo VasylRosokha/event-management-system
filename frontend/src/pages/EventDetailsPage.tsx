@@ -20,11 +20,11 @@ type Event = {
   date: string
   location: string
   participants?: Participant[]
-  organizer?: Organizer // ✅ ADD THIS
+  organizer?: Organizer
 }
 
 type JwtPayload = {
-  sub: string // ✅ KEEP THIS (your backend uses sub)
+  sub: string
   email: string
 }
 
@@ -35,8 +35,9 @@ export default function EventDetailsPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
-  // ✅ Decode token (UNCHANGED)
   useEffect(() => {
     const token = localStorage.getItem('token')
 
@@ -67,14 +68,11 @@ export default function EventDetailsPage() {
 
   const joinEvent = async () => {
     try {
+      setError('')
       await api.post(`/events/${id}/join`)
       fetchEvent()
     } catch (error: any) {
-      if (error.response?.status === 403) {
-        alert(error.response.data.message)
-      } else {
-        console.error('Join failed', error)
-      }
+      setError(error.response?.data?.message || 'Join failed')
     }
   }
 
@@ -88,23 +86,20 @@ export default function EventDetailsPage() {
   }
 
   const deleteEvent = async () => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return
-
     try {
+      setError('')
       await api.delete(`/events/${id}`)
       navigate('/')
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Delete failed')
+      setShowDeleteModal(false)
+      setError(error.response?.data?.message || 'Delete failed')
     }
   }
 
   if (loading) return <p>Loading event...</p>
   if (!event) return <p>Event not found</p>
 
-  // ✅ KEEP YOUR WORKING LOGIC
   const isJoined = userId && event.participants?.some((p) => p.id === userId)
-
-  // ✅ ADD ORGANIZER CHECK (NEW)
   const isOrganizer = userId === event.organizer?.id
 
   return (
@@ -117,13 +112,15 @@ export default function EventDetailsPage() {
 
       <p>Participants: {event.participants?.length ?? 0}</p>
 
-      {/* ✅ JOIN / LEAVE */}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+
+      {/* JOIN / LEAVE */}
       <div style={{ marginTop: '20px' }}>
         {!isJoined && <button onClick={joinEvent}>Join Event</button>}
         {isJoined && <button onClick={leaveEvent}>Leave Event</button>}
       </div>
 
-      {/* ✅ NEW: ORGANIZER CONTROLS */}
+      {/* ORGANIZER CONTROLS */}
       {isOrganizer && (
         <div style={{ marginTop: '20px' }}>
           <Link to={`/events/${id}/edit`}>
@@ -131,11 +128,44 @@ export default function EventDetailsPage() {
           </Link>
 
           <button
-            onClick={deleteEvent}
+            onClick={() => setShowDeleteModal(true)}
             style={{ marginLeft: '10px', color: 'red' }}
           >
             Delete Event
           </button>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '24px',
+              borderRadius: '8px',
+              maxWidth: '400px',
+              width: '100%',
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>Delete Event</h2>
+            <p>Are you sure you want to delete this event?</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowDeleteModal(false)}>Cancel</button>
+              <button onClick={deleteEvent} style={{ color: 'red' }}>
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

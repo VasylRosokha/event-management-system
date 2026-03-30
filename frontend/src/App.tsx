@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-
+import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/Navbar'
 
 import LoginPage from './pages/LoginPage'
@@ -12,6 +12,7 @@ import EditEventPage from './pages/EditEventPage'
 
 function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <Navbar />
 
@@ -25,6 +26,7 @@ function App() {
         <Route path="/events/:id/edit" element={<EditEventPage />} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   )
 }
 

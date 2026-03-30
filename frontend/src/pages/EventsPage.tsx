@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import api from '../api/axios'
-import { Link } from 'react-router-dom'
 import { jwtDecode } from 'jwt-decode'
+import api from '../api/axios'
+import { useAuth } from '../context/AuthContext'
+import EventCard from '../components/EventCard'
 
 type Participant = {
   id: string
-  email: string
 }
 
 type Event = {
@@ -14,6 +14,7 @@ type Event = {
   description: string
   date: string
   location: string
+  capacity?: number
   participants?: Participant[]
 }
 
@@ -24,16 +25,10 @@ type JwtPayload = {
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
+  const [joinError, setJoinError] = useState('')
+  const { token } = useAuth()
 
-  // ✅ decode user
-  useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      const decoded = jwtDecode<JwtPayload>(token)
-      setUserId(decoded.sub)
-    }
-  }, [])
+  const userId = token ? jwtDecode<JwtPayload>(token).sub : null
 
   const fetchEvents = async () => {
     try {
@@ -52,10 +47,11 @@ export default function EventsPage() {
 
   const joinEvent = async (id: string) => {
     try {
+      setJoinError('')
       await api.post(`/events/${id}/join`)
       fetchEvents()
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Join failed')
+      setJoinError(error.response?.data?.message || 'Join failed')
     }
   }
 
@@ -72,44 +68,21 @@ export default function EventsPage() {
 
   return (
     <div>
-      <p className="text-3xl font-bold text-blue-500">Hello Tailwind!</p>
       <h1>Public Events</h1>
+
+      {joinError && <p style={{ color: 'red' }}>{joinError}</p>}
 
       {events.length === 0 && <p>No events available</p>}
 
-      {events.map((event) => {
-        const isJoined =
-          userId && event.participants?.some((p) => p.id === userId)
-
-        return (
-          <div
-            key={event.id}
-            style={{
-              border: '1px solid gray',
-              padding: '10px',
-              margin: '10px 0',
-            }}
-          >
-            <Link to={`/events/${event.id}`}>
-              <h3>{event.title}</h3>
-            </Link>
-
-            <p>{event.description}</p>
-            <p>📍 {event.location}</p>
-            <p>📅 {new Date(event.date).toLocaleString()}</p>
-
-            <div style={{ marginTop: '10px' }}>
-              {!isJoined && (
-                <button onClick={() => joinEvent(event.id)}>Join</button>
-              )}
-
-              {isJoined && (
-                <button onClick={() => leaveEvent(event.id)}>Leave</button>
-              )}
-            </div>
-          </div>
-        )
-      })}
+      {events.map((event) => (
+        <EventCard
+          key={event.id}
+          {...event}
+          userId={userId}
+          onJoin={joinEvent}
+          onLeave={leaveEvent}
+        />
+      ))}
     </div>
   )
 }

@@ -1,44 +1,69 @@
-import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import { useNavigate } from 'react-router-dom'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 import api from '../api/axios'
+
+const schema = yup.object({
+  title: yup.string().required('Title is required'),
+  description: yup.string(),
+  date: yup
+    .string()
+    .required('Date is required')
+    .test('future', 'Event date must be in the future', (value) => {
+      if (!value) return false
+      return new Date(value) > new Date()
+    }),
+  location: yup.string().required('Location is required'),
+  capacity: yup
+    .number()
+    .transform((v, orig) => (orig === '' ? null : v))
+    .nullable()
+    .min(1, 'Capacity must be at least 1'),
+  visibility: yup
+    .mixed<'public' | 'private'>()
+    .oneOf(['public', 'private'])
+    .required(),
+})
+
+type EventFormData = {
+  title: string
+  description?: string
+  date: string
+  location: string
+  capacity?: number | null
+  visibility: 'public' | 'private'
+}
 
 export default function CreateEventPage() {
   const navigate = useNavigate()
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [date, setDate] = useState('')
-  const [location, setLocation] = useState('')
-  const [capacity, setCapacity] = useState<number | ''>('')
-  const [visibility, setVisibility] = useState('public')
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    setError,
+  } = useForm<EventFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: yupResolver(schema) as any,
+    defaultValues: { visibility: 'public' },
+  })
 
-  const handleSubmit = async () => {
-    if (!title || !date || !location) {
-      alert('Title, date, and location are required')
-      return
-    }
-
-    const selectedDate = new Date(date)
-    if (selectedDate < new Date()) {
-      alert('Cannot create event in the past')
-      return
-    }
-
+  const onSubmit = async (data: EventFormData) => {
     try {
       const response = await api.post('/events', {
-        title,
-        description,
-        date,
-        location,
-        capacity: capacity === '' ? null : Number(capacity),
-        visibility,
+        ...data,
+        capacity: data.capacity ?? null,
       })
-
-      // redirect to event details
       navigate(`/events/${response.data.id}`)
     } catch (error: any) {
       console.error('Create failed', error)
-      alert(error.response?.data?.message || 'Failed to create event')
+      setError('root', {
+        message: error.response?.data?.message || 'Failed to create event',
+      })
     }
   }
 
@@ -46,62 +71,65 @@ export default function CreateEventPage() {
     <div>
       <h1>Create Event</h1>
 
-      <input
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
+      {errors.root && <p style={{ color: 'red' }}>{errors.root.message}</p>}
 
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <input placeholder="Title" {...register('title')} />
+          {errors.title && <p style={{ color: 'red' }}>{errors.title.message}</p>}
+        </div>
 
-      <input
-        type="datetime-local"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
+        <div>
+          <textarea placeholder="Description" {...register('description')} />
+        </div>
 
-      <input
-        placeholder="Location"
-        value={location}
-        onChange={(e) => setLocation(e.target.value)}
-      />
-
-      <input
-        type="number"
-        placeholder="Capacity (optional)"
-        value={capacity}
-        onChange={(e) =>
-          setCapacity(e.target.value === '' ? '' : Number(e.target.value))
-        }
-      />
-
-      <div>
-        <label>
-          <input
-            type="radio"
-            value="public"
-            checked={visibility === 'public'}
-            onChange={() => setVisibility('public')}
+        <div>
+          <Controller
+            name="date"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                selected={field.value ? new Date(field.value) : null}
+                onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : '')}
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={15}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                placeholderText="Select date and time"
+                minDate={new Date()}
+              />
+            )}
           />
-          Public
-        </label>
+          {errors.date && <p style={{ color: 'red' }}>{errors.date.message}</p>}
+        </div>
 
-        <label>
+        <div>
+          <input placeholder="Location" {...register('location')} />
+          {errors.location && <p style={{ color: 'red' }}>{errors.location.message}</p>}
+        </div>
+
+        <div>
           <input
-            type="radio"
-            value="private"
-            checked={visibility === 'private'}
-            onChange={() => setVisibility('private')}
+            type="number"
+            placeholder="Capacity (optional)"
+            {...register('capacity')}
           />
-          Private
-        </label>
-      </div>
+          {errors.capacity && <p style={{ color: 'red' }}>{errors.capacity.message}</p>}
+        </div>
 
-      <button onClick={handleSubmit}>Create Event</button>
+        <div>
+          <label>
+            <input type="radio" value="public" {...register('visibility')} />
+            Public
+          </label>
+          <label>
+            <input type="radio" value="private" {...register('visibility')} />
+            Private
+          </label>
+        </div>
+
+        <button type="submit">Create Event</button>
+      </form>
     </div>
   )
 }
