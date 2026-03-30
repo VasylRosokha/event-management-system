@@ -67,69 +67,98 @@ export default function CreateEventPage() {
     }
   }
 
+  const inputClass =
+    'w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+
   return (
-    <div>
-      <h1>Create Event</h1>
+    <div className="mx-auto max-w-lg">
+      <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">Create Event</h1>
 
-      {errors.root && <p style={{ color: 'red' }}>{errors.root.message}</p>}
+        {errors.root && (
+          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+            {errors.root.message}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <input placeholder="Title" {...register('title')} />
-          {errors.title && <p style={{ color: 'red' }}>{errors.title.message}</p>}
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Title</label>
+            <input placeholder="Event title" {...register('title')} className={inputClass} />
+            {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
+          </div>
 
-        <div>
-          <textarea placeholder="Description" {...register('description')} />
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              placeholder="Event description (optional)"
+              {...register('description')}
+              rows={3}
+              className={inputClass}
+            />
+          </div>
 
-        <div>
-          <Controller
-            name="date"
-            control={control}
-            render={({ field }) => (
-              <DatePicker
-                selected={field.value ? new Date(field.value) : null}
-                onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : '')}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="MMMM d, yyyy h:mm aa"
-                placeholderText="Select date and time"
-                minDate={new Date()}
-              />
-            )}
-          />
-          {errors.date && <p style={{ color: 'red' }}>{errors.date.message}</p>}
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Date & Time</label>
+            <Controller
+              name="date"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  selected={field.value ? new Date(field.value) : null}
+                  onChange={(date: Date | null) => field.onChange(date ? date.toISOString() : '')}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  placeholderText="Select date and time"
+                  minDate={new Date()}
+                  className={inputClass}
+                />
+              )}
+            />
+            {errors.date && <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>}
+          </div>
 
-        <div>
-          <input placeholder="Location" {...register('location')} />
-          {errors.location && <p style={{ color: 'red' }}>{errors.location.message}</p>}
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Location</label>
+            <input placeholder="Event location" {...register('location')} className={inputClass} />
+            {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>}
+          </div>
 
-        <div>
-          <input
-            type="number"
-            placeholder="Capacity (optional)"
-            {...register('capacity')}
-          />
-          {errors.capacity && <p style={{ color: 'red' }}>{errors.capacity.message}</p>}
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Capacity</label>
+            <input
+              type="number"
+              placeholder="Optional"
+              {...register('capacity')}
+              className={inputClass}
+            />
+            {errors.capacity && <p className="mt-1 text-sm text-red-600">{errors.capacity.message}</p>}
+          </div>
 
-        <div>
-          <label>
-            <input type="radio" value="public" {...register('visibility')} />
-            Public
-          </label>
-          <label>
-            <input type="radio" value="private" {...register('visibility')} />
-            Private
-          </label>
-        </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Visibility</label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="radio" value="public" {...register('visibility')} />
+                Public
+              </label>
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="radio" value="private" {...register('visibility')} />
+                Private
+              </label>
+            </div>
+          </div>
 
-        <button type="submit">Create Event</button>
-      </form>
+          <button
+            type="submit"
+            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Create Event
+          </button>
+        </form>
+      </div>
     </div>
   )
 }

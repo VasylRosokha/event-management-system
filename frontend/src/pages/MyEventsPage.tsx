@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../api/axios'
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar'
 import moment from 'moment'
@@ -35,7 +35,7 @@ export default function MyEventsPage() {
     Views.MONTH,
   )
   const [date, setDate] = useState(new Date())
-  const [showCalendar, setShowCalendar] = useState(false) // ✅ toggle
+  const [showCalendar, setShowCalendar] = useState(false)
 
   const navigate = useNavigate()
   const localizer = momentLocalizer(moment)
@@ -49,7 +49,7 @@ export default function MyEventsPage() {
         const formatted: CalendarEvent[] = response.data.map((event: Event) => {
           const start = new Date(event.date)
           const end = new Date(start)
-          end.setHours(end.getHours() + 1) // 1 hour default
+          end.setHours(end.getHours() + 1)
           return {
             id: event.id,
             title: event.title,
@@ -73,62 +73,83 @@ export default function MyEventsPage() {
     navigate(`/events/${event.id}`)
   }
 
-  if (loading) return <p>Loading your events...</p>
+  if (loading) return <p className="text-gray-500">Loading your events...</p>
   if (events.length === 0)
     return (
-      <p>You are not part of any events yet. Explore public events and join.</p>
+      <p className="text-gray-500">
+        You are not part of any events yet.{' '}
+        <Link to="/" className="text-blue-600 hover:underline">Explore public events</Link> and join.
+      </p>
     )
 
   return (
     <div>
-      <h1>My Events</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">My Events</h1>
 
-      {/* Toggle buttons */}
-      <div style={{ marginBottom: '20px' }}>
-        <button
-          onClick={() => setShowCalendar(false)}
-          style={{ marginRight: '10px' }}
-        >
-          List View
-        </button>
-        <button onClick={() => setShowCalendar(true)}>Calendar View</button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCalendar(false)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              !showCalendar
+                ? 'bg-blue-600 text-white'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            List
+          </button>
+          <button
+            onClick={() => setShowCalendar(true)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+              showCalendar
+                ? 'bg-blue-600 text-white'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Calendar
+          </button>
+        </div>
       </div>
 
-      {/* List view */}
-      {!showCalendar &&
-        events.map((event) => (
-          <div
-            key={event.id}
-            style={{
-              border: '1px solid gray',
-              padding: '10px',
-              margin: '10px 0',
-            }}
-          >
-            <strong>{event.title}</strong>
-            <p>{event.description}</p>
-            <p>📍 {event.location}</p>
-            <p>📅 {new Date(event.date).toLocaleString()}</p>
-            {event.organizer && <p>Organizer: {event.organizer.email}</p>}
-            <p>Participants: {event.participants?.length ?? 0}</p>
-          </div>
-        ))}
+      {!showCalendar && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {events.map((event) => (
+            <Link
+              key={event.id}
+              to={`/events/${event.id}`}
+              className="block rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+            >
+              <h3 className="mb-2 font-semibold text-gray-900">{event.title}</h3>
+              {event.description && (
+                <p className="mb-3 line-clamp-2 text-sm text-gray-600">{event.description}</p>
+              )}
+              <div className="space-y-1 text-sm text-gray-500">
+                <p>📍 {event.location}</p>
+                <p>📅 {new Date(event.date).toLocaleString()}</p>
+                {event.organizer && <p>Organizer: {event.organizer.email}</p>}
+                <p>Participants: {event.participants?.length ?? 0}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
-      {/* Calendar view */}
       {showCalendar && (
-        <Calendar
-          localizer={localizer}
-          events={calendarEvents}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 600 }}
-          views={[Views.MONTH, Views.WEEK, Views.DAY]}
-          view={view}
-          onView={setView}
-          date={date}
-          onNavigate={setDate}
-          onSelectEvent={handleSelectEvent}
-        />
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <Calendar
+            localizer={localizer}
+            events={calendarEvents}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: 600 }}
+            views={[Views.MONTH, Views.WEEK, Views.DAY]}
+            view={view}
+            onView={setView}
+            date={date}
+            onNavigate={setDate}
+            onSelectEvent={handleSelectEvent}
+          />
+        </div>
       )}
     </div>
   )

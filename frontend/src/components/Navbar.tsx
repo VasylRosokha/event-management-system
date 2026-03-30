@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Navbar() {
   const navigate = useNavigate()
-  const { isAuthenticated: token, logout: authLogout } = useAuth()
+  const { isAuthenticated, logout: authLogout } = useAuth()
 
   const logout = () => {
     authLogout()
@@ -11,39 +11,51 @@ export default function Navbar() {
   }
 
   return (
-    <nav
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '15px',
-        padding: '10px',
-        borderBottom: '1px solid gray',
-        marginBottom: '20px',
-      }}
-    >
-      {/* LEFT SIDE */}
-      <Link to="/">Events</Link>
+    <nav className="border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
+      <div className="mx-auto flex max-w-5xl items-center gap-6">
+        <Link to="/" className="text-lg font-semibold text-gray-900">
+          EventHub
+        </Link>
 
-      {token && (
-        <>
-          <Link to="/create-event">Create Event</Link> {/* ✅ ADDED */}
-          <Link to="/my-events">My Events</Link>
-        </>
-      )}
+        <Link to="/" className="text-sm text-gray-600 hover:text-gray-900">
+          Events
+        </Link>
 
-      {/* RIGHT SIDE */}
-      <div style={{ marginLeft: 'auto' }}>
-        {!token && (
+        {isAuthenticated && (
           <>
-            <Link to="/login" style={{ marginRight: '10px' }}>
-              Login
+            <Link to="/create-event" className="text-sm text-gray-600 hover:text-gray-900">
+              Create Event
             </Link>
-
-            <Link to="/register">Register</Link>
+            <Link to="/my-events" className="text-sm text-gray-600 hover:text-gray-900">
+              My Events
+            </Link>
           </>
         )}
 
-        {token && <button onClick={logout}>Logout</button>}
+        <div className="ml-auto flex items-center gap-4">
+          {!isAuthenticated && (
+            <>
+              <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Register
+              </Link>
+            </>
+          )}
+
+          {isAuthenticated && (
+            <button
+              onClick={logout}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              Logout
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   )

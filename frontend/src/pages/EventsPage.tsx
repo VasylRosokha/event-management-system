@@ -64,25 +64,33 @@ export default function EventsPage() {
     }
   }
 
-  if (loading) return <p>Loading events...</p>
+  if (loading) return <p className="text-gray-500">Loading events...</p>
 
   return (
     <div>
-      <h1>Public Events</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900">Public Events</h1>
 
-      {joinError && <p style={{ color: 'red' }}>{joinError}</p>}
+      {joinError && (
+        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+          {joinError}
+        </div>
+      )}
 
-      {events.length === 0 && <p>No events available</p>}
+      {events.length === 0 && (
+        <p className="text-gray-500">No events available</p>
+      )}
 
-      {events.map((event) => (
-        <EventCard
-          key={event.id}
-          {...event}
-          userId={userId}
-          onJoin={joinEvent}
-          onLeave={leaveEvent}
-        />
-      ))}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {events.map((event) => (
+          <EventCard
+            key={event.id}
+            {...event}
+            userId={userId}
+            onJoin={joinEvent}
+            onLeave={leaveEvent}
+          />
+        ))}
+      </div>
     </div>
   )
 }

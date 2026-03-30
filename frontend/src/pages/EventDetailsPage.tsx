@@ -96,72 +96,118 @@ export default function EventDetailsPage() {
     }
   }
 
-  if (loading) return <p>Loading event...</p>
-  if (!event) return <p>Event not found</p>
+  if (loading) return <p className="text-gray-500">Loading event...</p>
+  if (!event) return <p className="text-gray-500">Event not found</p>
 
   const isJoined = userId && event.participants?.some((p) => p.id === userId)
   const isOrganizer = userId === event.organizer?.id
 
   return (
-    <div>
-      <h1>{event.title}</h1>
+    <div className="mx-auto max-w-2xl">
+      <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+        <h1 className="mb-4 text-2xl font-bold text-gray-900">{event.title}</h1>
 
-      <p>{event.description}</p>
-      <p>📍 {event.location}</p>
-      <p>📅 {new Date(event.date).toLocaleString()}</p>
+        {event.description && (
+          <p className="mb-6 text-gray-600">{event.description}</p>
+        )}
 
-      <p>Participants: {event.participants?.length ?? 0}</p>
+        <div className="mb-6 space-y-2 text-sm text-gray-500">
+          <p className="flex items-center gap-2">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {event.location}
+          </p>
+          <p className="flex items-center gap-2">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {new Date(event.date).toLocaleString()}
+          </p>
+        </div>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+        <div className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold text-gray-900">
+            Participants ({event.participants?.length ?? 0})
+          </h2>
+          {event.participants && event.participants.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {event.participants.map((p) => (
+                <span
+                  key={p.id}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700"
+                >
+                  {p.email}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No participants yet</p>
+          )}
+        </div>
 
-      {/* JOIN / LEAVE */}
-      <div style={{ marginTop: '20px' }}>
-        {!isJoined && <button onClick={joinEvent}>Join Event</button>}
-        {isJoined && <button onClick={leaveEvent}>Leave Event</button>}
+        {error && (
+          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          {!isJoined && (
+            <button
+              onClick={joinEvent}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Join Event
+            </button>
+          )}
+          {isJoined && (
+            <button
+              onClick={leaveEvent}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Leave Event
+            </button>
+          )}
+
+          {isOrganizer && (
+            <>
+              <Link
+                to={`/events/${id}/edit`}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Edit Event
+              </Link>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                Delete Event
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* ORGANIZER CONTROLS */}
-      {isOrganizer && (
-        <div style={{ marginTop: '20px' }}>
-          <Link to={`/events/${id}/edit`}>
-            <button>Edit Event</button>
-          </Link>
-
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            style={{ marginLeft: '10px', color: 'red' }}
-          >
-            Delete Event
-          </button>
-        </div>
-      )}
-
-      {/* DELETE CONFIRMATION MODAL */}
       {showDeleteModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '8px',
-              maxWidth: '400px',
-              width: '100%',
-            }}
-          >
-            <h2 style={{ marginTop: 0 }}>Delete Event</h2>
-            <p>Are you sure you want to delete this event?</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowDeleteModal(false)}>Cancel</button>
-              <button onClick={deleteEvent} style={{ color: 'red' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="mx-4 w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+            <h2 className="mb-2 text-lg font-semibold text-gray-900">Delete Event</h2>
+            <p className="mb-6 text-sm text-gray-600">
+              Are you sure you want to delete this event? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteEvent}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
                 Delete
               </button>
             </div>
